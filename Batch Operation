@@ -1,0 +1,16 @@
+pdb.ids.file<-read.table("sample batch file.txt", header=T)
+batch.pdb <- function(pdb.ids.file){
+x<-read.table(pdb.ids.file, header=T)
+y<-as.list(x$PDB)
+library(bio3d)
+list1 <-as.list(get.pdb(y))
+unlist(list1)
+list2<-unlist(list1)
+list2
+for (i in 1:length(list2)){
+data<-read.pdb(list2[[i]])
+data <- as.data.frame(data$atom)
+write.table(data, paste0(list2[i],".txt"),sep="\t",row.names=FALSE)
+}
+
+#the batch operation command will be like ">batch.pdb("sample batch file.txt")"
