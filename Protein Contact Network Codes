@@ -1,0 +1,90 @@
+#import pdb file in R
+library('bio3d')
+protein<- read.pdb('2K0A')
+data <- as.data.frame(protein$atom)
+head(data)
+
+####################################################
+
+#extract rows containing CA only
+library(dplyr)
+data<-filter(data, elety== "CA")
+data_CA<- data %>% select(elety, chain, x,y,z)
+print(data_CA)
+write.table(data_CA,"dataCA.txt",sep="\t",row.names=FALSE) #writing the dataframe to text file
+dataCA<- data %>% select(x,y,z) #extract information of coordinates only
+print(dataCA)
+
+#####################################################
+
+#creating distance matrix
+library(rdist)
+library(MASS)
+M1 <- as.matrix(dataCA)
+M11 <- rdist(M1, metric = "euclidean", p = 2L)
+print(M11)
+
+######################################################
+
+#converting distance matrix to dataframes to add row and column names
+library(tibble)
+library(dplyr)
+x<-M11
+x<-as.matrix(x)
+x<-as.data.frame(x)
+print(x)
+
+######################################################
+
+#add prefix to coumn names
+data_new <- x
+colnames(data_new) <- paste0("CA", colnames(data_new))
+rownames(data_new) <- paste0("CA", rownames(data_new))
+data_new
+write.csv(data_new, "DIST_Matrix_CA.csv", sep="\t")
+
+######################################################
+
+#converting a matrix to adjacency matrix
+
+library(dplyr)
+data<-data_new
+head(data)
+nrow(data)
+ncol(data)
+data[,2:ncol(data)][data[,2:ncol(data)]<7 & data[,2:ncol(data)]>0]
+data[,2:ncol(data)][data[,2:ncol(data)]<7 & data[,2:ncol(data)]>0]<-1
+data[,2:ncol(data)][data[,2:ncol(data)]>7]
+data[,2:ncol(data)][data[,2:ncol(data)]>7]<-0
+print(data)
+write.csv(data, "pcnnew.csv", sep="\t")
+
+######################################################
+
+#creating network from adjacency matrix
+
+library("igraph")
+data<-data
+mat <- as.matrix(data)
+dim(mat)
+mat <- mat[,-2]
+dim(mat)
+g<-graph.adjacency(mat, mode ="undirected", weighted= NULL)
+plot(g, vertex.size=0, vertex.label=c(0), vertex.label.color="black")
+
+######################################################
+
+#converting adjacency matrix to interaction table
+
+m<-as.matrix(read.table("datanew.txt"))
+w<- which(m==1, arr.ind=TRUE)
+data1<-data.frame(r=rownames(m)[w[,"row"]], i=1, c=colnames(m)[w[,"col"]]) 
+   # i=1 is optional
+   # can be done with i also
+head(data1, 6)
+write.csv(data1, "final_interaction.csv", sep="\t")
+
+
+
+
+
